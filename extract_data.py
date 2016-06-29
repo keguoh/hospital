@@ -32,7 +32,7 @@ for row in rows:
     seconds.append(row.entry_time)
 
 plt.hist(seconds, bins=30*24)
-plt.title("Gaussian Histogram")
+plt.title("Entry_time")
 plt.xlabel("Value")
 plt.ylabel("Frequency")
 plt.show()
