@@ -2,7 +2,8 @@ import pyodbc as po
 import numpy as np
 import matplotlib.pyplot as plt
 
-DBfile = 'C:/Users/huangke/Dropbox/Research/3RD PROJECT/HomeHospital/database/April2004/April2004.mdb'
+# DBfile = 'C:/Users/huangke/Dropbox/Research/3RD PROJECT/HomeHospital/database/April2004/April2004.mdb'
+DBfile = '/Users/keguoh/GitHub/hospital/HomeHospital/database/April2004/April2004.mdb'
 conn = po.connect('DRIVER={Microsoft Access Driver (*.mdb)};DBQ='+DBfile)
 #use below conn if using with Access 2007, 2010 .accdb file
 #conn = pyodbc.connect(r'Driver={Microsoft Access Driver (*.mdb, *.accdb)};DBQ='+DBfile)
