@@ -36,7 +36,22 @@ qqnorm(std_service_data_adjust) ## drawing the QQ plot for the trancated data
 abline(0,1) ## drawing a 45-degree reference line
 
 #### getting service time ###
-dat1 <- data.frame(data[1:20,])
-dat1$vru_exit <- as.POSIXct(dat1$vru_exit, format = '%H:%M:%S')
-dat1$vru_entry <- as.POSIXct(dat1$vru_entry, format = '%H:%M:%S')
-data_difference <- dat1$vru_exit - dat1$vru_entry
+
+# https://www.stat.berkeley.edu/classes/s133/dates.html
+dat1 <- data[1:20,]
+
+entry <- as.POSIXct(paste(dat1$date, dat1$vru_entry), format='%y%m%d %H:%M:%S')
+dat1$vru_entry_sec <- as.vector(entry) 
+exit <- as.POSIXct(paste(dat1$date, dat1$vru_exit), format='%y%m%d %H:%M:%S')
+dat1$vru_exit_sec <- as.vector(exit)
+data_difference <- dat1$vru_exit_sec - dat1$vru_entry_sec
+
+Oct1 <- as.numeric(as.POSIXct("991001 00:00:00", format='%y%m%d %H:%M:%S'))
+
+exit <- as.POSIXct(paste(data$date, data$vru_exit), format='%y%m%d %H:%M:%S')
+data$vru_exit_sec <- as.vector(exit)
+a = data$vru_exit_sec-Oct1
+d= density((a %% (60*60*24))/60/60)
+plot(d, xlim=c(6,24), main = "Average calls per hour")
+
+plot(density(data$vru_exit_sec)) #There seems to be week pattern

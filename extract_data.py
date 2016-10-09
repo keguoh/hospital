@@ -2,9 +2,10 @@ import pyodbc as po
 import numpy as np
 import matplotlib.pyplot as plt
 
-# DBfile = 'C:/Users/huangke/Dropbox/Research/3RD PROJECT/HomeHospital/database/April2004/April2004.mdb'
-DBfile = '/Users/keguoh/GitHub/hospital/HomeHospital/database/April2004/April2004.mdb'
-conn = po.connect('DRIVER={Microsoft Access Driver (*.mdb)};DBQ='+DBfile)
+DBfile = 'C:/Users/huangke.PHIBRED/Dropbox/Research/3RD PROJECT/HomeHospital/database/April2004/April2004.mdb'
+conn = po.connect('DRIVER={Microsoft Access Driver (*.mdb, *.accdb)};DBQ='+DBfile)
+
+# Install https://www.microsoft.com/en-us/download/confirmation.aspx?id=13255
 #use below conn if using with Access 2007, 2010 .accdb file
 #conn = pyodbc.connect(r'Driver={Microsoft Access Driver (*.mdb, *.accdb)};DBQ='+DBfile)
 
@@ -32,7 +33,7 @@ for row in rows:
     seconds.append(row.entry_time)
 
 plt.hist(seconds, bins=30*24)
-plt.title("Entry_time")
+plt.title("Gaussian Histogram")
 plt.xlabel("Value")
 plt.ylabel("Frequency")
 plt.show()
