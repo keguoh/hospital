@@ -1,22 +1,23 @@
 #### Code by Matt Asher. Published at StatisticsBlog.com ####
+#### http://www.statisticsblog.com/2011/10/waiting-in-line-waiting-on-r/ ####
 #### CONFIG ####
 # Number of slots to fill
-numbSlots = 2
+numbSlots = 40
 
+prec = 1000
+t = 0
+tmax = 10
+At = floor(res_1*prec)/prec
 # Total time to track
-intervals = 100
-
-# Probability that a new person will show up during an interval
-# Note, a maximum of one new person can show up during an interval
-p = 0.1
+intervals = seq(t,tmax,1/prec)
 
 # Average time each person takes at the teller, discretized exponential 
 # distribution assumed Times will be augmented by one, so that everyone takes at
 # least 1 interval to serve
-meanServiceTime = 25
+meanServiceTime = 1
 
 #### INITIALIZATION ####
-queueLengths = rep(0, intervals)
+queueLengths = rep(0, length(intervals))
 slots = rep(0, numbSlots)
 waitTimes = c()
 leavingTimes = c()
@@ -46,7 +47,7 @@ person <- proto(
 )
 
 #### Main loop ####
-for(i in 1:intervals) {
+for(i in intervals) {
   # Check if anyone is leaving the slots
   for(j in 1:numbSlots) {
     if(slots[j] == i) {
@@ -57,7 +58,7 @@ for(i in 1:intervals) {
   }
   
   # See if a new person is to be added to the queue
-  if(runif(1) < p) {
+  if(i %in% At) {
     newPerson = as.proto(person$as.list())
     newPerson$intervalArrived = i
     queue = c(queue, newPerson)
@@ -98,7 +99,7 @@ for(i in 1:intervals) {
   }
   
   # End of the interval, what is the state of things
-  queueLengths[i] = length(queue);
+  queueLengths[i*prec] = length(queue);
 }
 
 #### Output ####

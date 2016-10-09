@@ -1,10 +1,11 @@
-bs <- c(0.01, 0.1, 1)
 get_nhpp_realization <- function(lambda){
   set.seed(1)
   t_max <- 10
   t <- 0
-  lambda_star <- function() max(sapply(seq(1, t_max,length.out=1000), lambda))*2
-  Lambda <- function(tupper) integrate(f = lambda, lower = 0, upper = tupper)$value
+  lambda_star <- function(){
+    max(sapply(seq(1, t_max,length.out=1000), lambda))*2}
+  Lambda <- function(tupper){
+    integrate(f = lambda, lower = 0, upper = tupper)$value}
   X <- numeric()
   while(t <= t_max){
     u <- runif(1)
@@ -15,8 +16,18 @@ get_nhpp_realization <- function(lambda){
   }
   return(X)
 }
+l = 35
+b = 10/35
+g = 1
+lambda <- function(t)  l*(1+b*sin(g*t))
+res_1 <- get_nhpp_realization(lambda)
+length(res_1)
+hist(res_1)
+
+
+bs <- c(0.01, 0.1, 1)
 b <- bs[1]
-lambda <- function(t)  b*t^2
+lambda <- function(t)  l*(1+b*sin(g*t))
 res_1 <- get_nhpp_realization(lambda)
 n_1 <- length(res_1)
 b <- bs[2]
