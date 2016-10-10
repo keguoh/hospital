@@ -1,14 +1,21 @@
+#### http://www.statisticsblog.com/2011/10/waiting-in-line-waiting-on-r/ ####
+tmax <- 3
+t <- 0
+# Number of slots to fill
+numbSlots = 4
+# Total time to track
+timeIntervals = seq(t,tmax,1/precision)
+precision = 1000  #precision
+
 ## NHPP Arrivals
 get_nhpp_realization <- function(lambda){
   set.seed(1)
-  t_max <- 1
-  t <- 0
   lambda_star <- function(){
-    max(sapply(seq(1, t_max,length.out=1000), lambda))*2}
+    max(sapply(seq(1, tmax,length.out=1000), lambda))*2}
   Lambda <- function(tupper){
     integrate(f = lambda, lower = 0, upper = tupper)$value}
   X <- numeric()
-  while(t <= t_max){
+  while(t <= tmax){
     u <- runif(1)
     t <- t - log(u)/lambda_star()
     if(runif(1) < lambda(t)/lambda_star()) {
@@ -23,16 +30,7 @@ g = 1
 lambda <- function(t)  l*(1+b*sin(g*t))
 res_1 <- get_nhpp_realization(lambda)
 
-#### Code by Matt Asher. Published at StatisticsBlog.com ####
-#### http://www.statisticsblog.com/2011/10/waiting-in-line-waiting-on-r/ ####
-#### CONFIG ####
-# Number of slots to fill
-numbSlots = 4
-
-prec = 100  #precision
-At = floor(res_1*prec)/prec
-# Total time to track
-intervals = seq(t,tmax,1/prec)
+At = floor(res_1*precision)/precision
 
 # Average time each person takes at the teller, discretized exponential 
 # distribution assumed Times will be augmented by one, so that everyone takes at
@@ -40,7 +38,7 @@ intervals = seq(t,tmax,1/prec)
 meanServiceTime = 1
 
 #### INITIALIZATION ####
-queueLengths = rep(0, length(intervals))
+queueLengths = rep(0, length(timeIntervals))
 totalCustomer = 0
 slots = rep(0, numbSlots)
 waitTimes = c()
@@ -70,13 +68,13 @@ person <- proto(
   intervalArrived = 0,
   intervalAttended = NULL,
   # How much teller time will this person demand?
-  intervalsNeeded = floor(rexp(1, 1/meanServiceTime)) + 1,
+  intervalsNeeded = (floor(rexp(1, 1/meanServiceTime)*precision) + 1)/precision,
   intervalsWaited = 0,
   intervalsWaitedAtHeadOfQueue = 0
 )
 
 #### Main loop ####
-for(i in intervals) {
+for(i in timeIntervals) {
   
   # Check if anyone is leaving the slots
   for(j in 1:numbSlots) {
@@ -134,7 +132,7 @@ for(i in intervals) {
   }
   
   # End of the interval, what is the state of things
-  queueLengths[i*prec] = length(queue);
+  queueLengths[i*precision] = length(queue);
   inc(Tkt[totalCustomer])
 }
 
