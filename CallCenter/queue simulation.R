@@ -1,11 +1,11 @@
 #### http://www.statisticsblog.com/2011/10/waiting-in-line-waiting-on-r/ ####
 tmax <- 3
 t <- 0
-# Number of slots to fill
-numbSlots = 4
+numbServers = 4
 # Total time to track
-timeIntervals = seq(t,tmax,1/precision)
-precision = 1000  #precision
+precision = 100  #precision
+timeSeq = seq(t,tmax,1/precision)
+meanServiceTime = .1
 
 ## NHPP Arrivals
 get_nhpp_realization <- function(lambda){
@@ -22,33 +22,30 @@ get_nhpp_realization <- function(lambda){
       X <- c(X,t)
     }
   }
-  return(X)
+  return(floor(X*precision)/precision)
 }
 l = 35
 b = 10/35
 g = 1
 lambda <- function(t)  l*(1+b*sin(g*t))
-res_1 <- get_nhpp_realization(lambda)
+arrivalTimes <- get_nhpp_realization(lambda)
 
-At = floor(res_1*precision)/precision
 
 # Average time each person takes at the teller, discretized exponential 
 # distribution assumed Times will be augmented by one, so that everyone takes at
 # least 1 interval to serve
-meanServiceTime = 1
 
 #### INITIALIZATION ####
-queueLengths = rep(0, length(timeIntervals))
-totalCustomer = 0
-slots = rep(0, numbSlots)
+queueLengths = rep(0, length(timeSeq))
+totalCustomers = 0
+serviceCompletionTime = rep(0, numbServers)
 waitTimes = c()
 leavingTimes = c()
 queue = list()
-arrivalTimes = c()
 frontOfLineWaits = c()
-Akt = rep(0, length(At))
-Dkt = rep(0, length(At))
-Tkt = rep(0, length(At))
+Akt = rep(0, length(arrivalTimes))
+Dkt = rep(0, length(arrivalTimes))
+Tkt = rep(0, length(arrivalTimes))
 
 #### Libraries ####
 # Use the proto library to treat people like objects in traditional oop
@@ -68,49 +65,48 @@ person <- proto(
   intervalArrived = 0,
   intervalAttended = NULL,
   # How much teller time will this person demand?
-  intervalsNeeded = (floor(rexp(1, 1/meanServiceTime)*precision) + 1)/precision,
-  intervalsWaited = 0,
-  intervalsWaitedAtHeadOfQueue = 0
+  serviceTimeNeeded = (floor(rexp(1, 1/meanServiceTime)*precision) + 1)/precision,
+  serviceTimeWaited = 0,
+  serviceTimeWaitedAtHeadOfQueue = 0
 )
 
 #### Main loop ####
-for(i in timeIntervals) {
+for(i in timeSeq) {
   
-  # Check if anyone is leaving the slots
-  for(j in 1:numbSlots) {
-    if(slots[j] == i) {
-      inc(Dkt[totalCustomer])
-      dec(totalCustomer)
+  # Check if anyone is leaving the servers
+  for(j in 1:numbServers) {
+    if(serviceCompletionTime[j] == i) {
+      inc(Dkt[totalCustomers])
+      dec(totalCustomers)
       # They are leaving the queue, slot to 0
-      slots[j] = 0
+      serviceCompletionTime[j] = 0
       leavingTimes = c(leavingTimes, i)
     }
   }
   
   
   # See if a new person is to be added to the queue
-  if(i %in% At) {
-    inc(Akt[totalCustomer])
-    inc(totalCustomer)
+  if(i %in% arrivalTimes) {
+    inc(Akt[totalCustomers])
+    inc(totalCustomers)
     newPerson = as.proto(person$as.list())
     newPerson$intervalArrived = i
     queue = c(queue, newPerson)
-    arrivalTimes  = c(arrivalTimes, i)
   }
   
   # Can we place someone into a slot?
-  for(j in 1:numbSlots) {
+  for(j in 1:numbServers) {
     # If this slot is free
-    if(!slots[j]) { 
+    if(!serviceCompletionTime[j]) { 
       if(length(queue) > 0) {
         placedPerson = queue[[1]]
-        slots[j] = i + placedPerson$intervalsNeeded
-        waitTimes = c(waitTimes, placedPerson$intervalsWaited)
+        serviceCompletionTime[j] = i + placedPerson$serviceTimeNeeded
+        waitTimes = c(waitTimes, placedPerson$serviceTimeWaited)
         # Only interested in these if person waited 1 or more intevals at front
         # of line
-        if(placedPerson$intervalsWaitedAtHeadOfQueue) {
+        if(placedPerson$serviceTimeWaitedAtHeadOfQueue) {
           frontOfLineWaits = c(frontOfLineWaits, 
-                               placedPerson$intervalsWaitedAtHeadOfQueue)
+                               placedPerson$serviceTimeWaitedAtHeadOfQueue)
         }
         
         # Remove placed person from queue
@@ -122,23 +118,22 @@ for(i in timeIntervals) {
   # Everyone left in the queue has now waited one more interval to be served
   if(length(queue)) {
     for(j in 1:length(queue)) {
-      inc(queue[[j]]$intervalsWaited) # = queue[[j]]$intervalsWaited + 1
+      inc(queue[[j]]$serviceTimeWaited) # = queue[[j]]$serviceTimeWaited + 1
     }
     
     # The (possibley new) person at the front of the queue has had to wait 
     # there one more interval.
-    inc(queue[[1]]$intervalsWaitedAtHeadOfQueue) 
-    # = queue[[1]]$intervalsWaitedAtHeadOfQueue + 1
+    inc(queue[[1]]$serviceTimeWaitedAtHeadOfQueue) 
+    # = queue[[1]]$serviceTimeWaitedAtHeadOfQueue + 1
   }
   
   # End of the interval, what is the state of things
-  queueLengths[i*precision] = length(queue);
-  inc(Tkt[totalCustomer])
+  queueLengths[i*precision] = length(queue)
+  inc(Tkt[totalCustomers+1])
 }
 
 #### Output ####
-plot(queueLengths, type="o", col="blue", pch=20, 
-     main="Queue lengths over time",
+plot(queueLengths, type="o", col="blue", pch=20, main="Queue lengths over time",
      xlab="Interval", ylab="Queue length")
-# plot(waitTimes, type="o", col="blue", pch=20, main="Wait times", 
-#      xlab="Person", ylab="Wait time")
+plot(totalCustomers, type="o", col="blue", pch=20, 
+     main="Total Customers over time", xlab="Person", ylab="Wait time")
