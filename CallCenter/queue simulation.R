@@ -1,13 +1,13 @@
 #### http://www.statisticsblog.com/2011/10/waiting-in-line-waiting-on-r/ ####
-tmax <- 3
-t <- -0
-numbServers = 4
+tmax <- 15
+t <- 0
+numbServers = 10
 # Total time to track
-precision = 1000  #precision
+precision = 100  #precision
 timeSeq = seq(1/precision,tmax,1/precision)
 meanServiceTime = .1
 
-## NHPP Arrivals
+#### NHPP Arrivals ####
 get_nhpp_realization <- function(lambda){
   set.seed(1)
   lambda_star <- function(){
@@ -30,22 +30,10 @@ g = 1
 lambda <- function(t)  l*(1+b*sin(g*t))
 arrivalTimes <- get_nhpp_realization(lambda)
 
-
 # Average time each person takes at the teller, discretized exponential 
 # distribution assumed Times will be augmented by one, so that everyone takes at
 # least 1 interval to serve
 
-#### INITIALIZATION ####
-queueLengths = rep(0, length(timeSeq))
-totalCustomers = 0
-serviceCompletionTime = rep(0, numbServers)
-waitTimes = c()
-leavingTimes = c()
-queue = list()
-frontOfLineWaits = c()
-Akt = rep(0, length(arrivalTimes))
-Dkt = rep(0, length(arrivalTimes))
-Tkt = rep(0, length(arrivalTimes))
 
 #### Libraries ####
 # Use the proto library to treat people like objects in traditional oop
@@ -63,16 +51,26 @@ dec <- function(x) {
 # Main object, really a "proto" function
 person <- proto(
   intervalArrived = 0,
-  intervalAttended = NULL,
   # How much teller time will this person demand?
-  serviceTimeNeeded = (floor(rexp(1, 1/meanServiceTime)*precision) + 1)/precision,
-  serviceTimeWaited = 0,
-  serviceTimeWaitedAtHeadOfQueue = 0
+  serviceEpochsNeeded = (floor(rexp(1, 1/meanServiceTime)*precision) + 1),
+  serviceEpochsWaited = 0,
+  serviceEpochsWaitedAtHeadOfQueue = 0
 )
+
+#### INITIALIZATION ####
+queueLengths = rep(20, length(timeSeq))
+totalCustomers = 0
+serviceCompletionTime = rep(0, numbServers)
+waitTimes = c()
+leavingTimes = c()
+queue = list()
+frontOfLineWaits = c()
+Akt = rep(0, length(arrivalTimes))
+Dkt = rep(0, length(arrivalTimes))
+Tkt = rep(0, length(arrivalTimes))
 
 #### Main loop ####
 for(i in timeSeq) {
-  
   # Check if anyone is leaving the servers
   for(j in 1:numbServers) {
     if(serviceCompletionTime[j] == i) {
@@ -100,13 +98,13 @@ for(i in timeSeq) {
     if(!serviceCompletionTime[j]) { 
       if(length(queue) > 0) {
         placedPerson = queue[[1]]
-        serviceCompletionTime[j] = i + placedPerson$serviceTimeNeeded
-        waitTimes = c(waitTimes, placedPerson$serviceTimeWaited)
+        serviceCompletionTime[j] = i + placedPerson$serviceEpochsNeeded/precision
+        waitTimes = c(waitTimes, placedPerson$serviceEpochsWaited/precision)
         # Only interested in these if person waited 1 or more intevals at front
         # of line
-        if(placedPerson$serviceTimeWaitedAtHeadOfQueue) {
+        if(placedPerson$serviceEpochsWaitedAtHeadOfQueue) {
           frontOfLineWaits = c(frontOfLineWaits, 
-                               placedPerson$serviceTimeWaitedAtHeadOfQueue)
+                               placedPerson$serviceEpochsWaitedAtHeadOfQueue)
         }
         
         # Remove placed person from queue
@@ -118,18 +116,23 @@ for(i in timeSeq) {
   # Everyone left in the queue has now waited one more interval to be served
   if(length(queue)) {
     for(j in 1:length(queue)) {
-      inc(queue[[j]]$serviceTimeWaited) # = queue[[j]]$serviceTimeWaited + 1
+      inc(queue[[j]]$serviceEpochsWaited)
     }
-    
     # The (possibley new) person at the front of the queue has had to wait 
     # there one more interval.
-    inc(queue[[1]]$serviceTimeWaitedAtHeadOfQueue) 
-    # = queue[[1]]$serviceTimeWaitedAtHeadOfQueue + 1
+    inc(queue[[1]]$serviceEpochsWaitedAtHeadOfQueue)
+  }
+  
+  if (i<2 & i>1.9){
+    print(c(length(queue), i, totalCustomers))
   }
   
   # End of the interval, what is the state of things
   queueLengths[i*precision] = length(queue)
-  inc(Tkt[totalCustomers+1])
+  inc(Tkt[totalCustomers])
+  if (i<2 & i>1.9){
+    print(c(queueLengths[i*precision], length(queue), i*precision, totalCustomers))
+  }
 }
 
 #### Output ####
