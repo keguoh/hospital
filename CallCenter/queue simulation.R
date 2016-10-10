@@ -29,7 +29,7 @@ res_1 <- get_nhpp_realization(lambda)
 # Number of slots to fill
 numbSlots = 40
 
-prec = 1000
+prec = 1000  #precision
 t = 0
 tmax = 10
 At = floor(res_1*prec)/prec
@@ -43,13 +43,16 @@ meanServiceTime = 1
 
 #### INITIALIZATION ####
 queueLengths = rep(0, length(intervals))
+totalCustomer = 0
 slots = rep(0, numbSlots)
 waitTimes = c()
 leavingTimes = c()
 queue = list()
 arrivalTimes = c()
 frontOfLineWaits = c()
-
+Akt = rep(0, length(At))
+Dkt = rep(0, length(At))
+Tkt = rep(0, length(At))
 
 #### Libraries ####
 # Use the proto library to treat people like objects in traditional oop
@@ -59,6 +62,9 @@ library("proto")
 # R is missing a nice way to do ++, so we use this
 inc <- function(x) {
   eval.parent(substitute(x <- x + 1))
+}
+dec <- function(x) {
+  eval.parent(substitute(x <- x - 1))
 }
 
 # Main object, really a "proto" function
@@ -73,17 +79,23 @@ person <- proto(
 
 #### Main loop ####
 for(i in intervals) {
+  
   # Check if anyone is leaving the slots
   for(j in 1:numbSlots) {
     if(slots[j] == i) {
+      inc(Dkt[totalCustomer])
+      dec(totalCustomer)
       # They are leaving the queue, slot to 0
       slots[j] = 0
       leavingTimes = c(leavingTimes, i)
     }
   }
   
+  
   # See if a new person is to be added to the queue
   if(i %in% At) {
+    inc(Akt[totalCustomer])
+    inc(totalCustomer)
     newPerson = as.proto(person$as.list())
     newPerson$intervalArrived = i
     queue = c(queue, newPerson)
