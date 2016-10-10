@@ -1,7 +1,7 @@
 ## NHPP Arrivals
 get_nhpp_realization <- function(lambda){
   set.seed(1)
-  t_max <- 10
+  t_max <- 1
   t <- 0
   lambda_star <- function(){
     max(sapply(seq(1, t_max,length.out=1000), lambda))*2}
@@ -27,11 +27,9 @@ res_1 <- get_nhpp_realization(lambda)
 #### http://www.statisticsblog.com/2011/10/waiting-in-line-waiting-on-r/ ####
 #### CONFIG ####
 # Number of slots to fill
-numbSlots = 40
+numbSlots = 4
 
-prec = 1000  #precision
-t = 0
-tmax = 10
+prec = 100  #precision
 At = floor(res_1*prec)/prec
 # Total time to track
 intervals = seq(t,tmax,1/prec)
@@ -137,6 +135,7 @@ for(i in intervals) {
   
   # End of the interval, what is the state of things
   queueLengths[i*prec] = length(queue);
+  inc(Tkt[totalCustomer])
 }
 
 #### Output ####
