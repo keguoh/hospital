@@ -1,3 +1,28 @@
+## NHPP Arrivals
+get_nhpp_realization <- function(lambda){
+  set.seed(1)
+  t_max <- 10
+  t <- 0
+  lambda_star <- function(){
+    max(sapply(seq(1, t_max,length.out=1000), lambda))*2}
+  Lambda <- function(tupper){
+    integrate(f = lambda, lower = 0, upper = tupper)$value}
+  X <- numeric()
+  while(t <= t_max){
+    u <- runif(1)
+    t <- t - log(u)/lambda_star()
+    if(runif(1) < lambda(t)/lambda_star()) {
+      X <- c(X,t)
+    }
+  }
+  return(X)
+}
+l = 35
+b = 10/35
+g = 1
+lambda <- function(t)  l*(1+b*sin(g*t))
+res_1 <- get_nhpp_realization(lambda)
+
 #### Code by Matt Asher. Published at StatisticsBlog.com ####
 #### http://www.statisticsblog.com/2011/10/waiting-in-line-waiting-on-r/ ####
 #### CONFIG ####
