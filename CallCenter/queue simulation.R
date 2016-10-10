@@ -1,10 +1,10 @@
 #### http://www.statisticsblog.com/2011/10/waiting-in-line-waiting-on-r/ ####
 tmax <- 3
-t <- 0
+t <- -0
 numbServers = 4
 # Total time to track
-precision = 100  #precision
-timeSeq = seq(t,tmax,1/precision)
+precision = 1000  #precision
+timeSeq = seq(1/precision,tmax,1/precision)
 meanServiceTime = .1
 
 ## NHPP Arrivals
@@ -135,5 +135,5 @@ for(i in timeSeq) {
 #### Output ####
 plot(queueLengths, type="o", col="blue", pch=20, main="Queue lengths over time",
      xlab="Interval", ylab="Queue length")
-plot(totalCustomers, type="o", col="blue", pch=20, 
-     main="Total Customers over time", xlab="Person", ylab="Wait time")
+# plot(totalCustomers, type="o", col="blue", pch=20, 
+#      main="Total Customers over time", xlab="Person", ylab="Wait time")
