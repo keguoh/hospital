@@ -1,11 +1,11 @@
 #### http://www.statisticsblog.com/2011/10/waiting-in-line-waiting-on-r/ ####
-tmax <- 15
+tmax <- 20
 t <- 0
-numbServers = 10
+numbServers = 40
 # Total time to track
-precision = 100  #precision
-timeSeq = seq(1/precision,tmax,1/precision)
-meanServiceTime = .1
+precision = 1000  #precision
+epochSeq = seq(1, tmax*precision, 1)
+meanServiceTime = 1
 
 #### NHPP Arrivals ####
 get_nhpp_realization <- function(lambda){
@@ -22,13 +22,13 @@ get_nhpp_realization <- function(lambda){
       X <- c(X,t)
     }
   }
-  return(floor(X*precision)/precision)
+  return(floor(X*precision))
 }
 l = 35
 b = 10/35
 g = 1
 lambda <- function(t)  l*(1+b*sin(g*t))
-arrivalTimes <- get_nhpp_realization(lambda)
+arrivalEpochs <- get_nhpp_realization(lambda)
 
 # Average time each person takes at the teller, discretized exponential 
 # distribution assumed Times will be augmented by one, so that everyone takes at
@@ -58,33 +58,33 @@ person <- proto(
 )
 
 #### INITIALIZATION ####
-queueLengths = rep(20, length(timeSeq))
+queueLengths = rep(20.5, length(epochSeq))
 totalCustomers = 0
-serviceCompletionTime = rep(0, numbServers)
-waitTimes = c()
+serviceCompletionEpoch = rep(0, numbServers)
+waitEpoch = c()
 leavingTimes = c()
 queue = list()
 frontOfLineWaits = c()
-Akt = rep(0, length(arrivalTimes))
-Dkt = rep(0, length(arrivalTimes))
-Tkt = rep(0, length(arrivalTimes))
+Akt = rep(0, length(arrivalEpochs))
+Dkt = rep(0, length(arrivalEpochs))
+Tkt = rep(0, length(arrivalEpochs))
 
 #### Main loop ####
-for(i in timeSeq) {
+for(i in epochSeq) {
   # Check if anyone is leaving the servers
   for(j in 1:numbServers) {
-    if(serviceCompletionTime[j] == i) {
+    if(serviceCompletionEpoch[j] == i) {
       inc(Dkt[totalCustomers])
       dec(totalCustomers)
       # They are leaving the queue, slot to 0
-      serviceCompletionTime[j] = 0
+      serviceCompletionEpoch[j] = 0
       leavingTimes = c(leavingTimes, i)
     }
   }
   
   
   # See if a new person is to be added to the queue
-  if(i %in% arrivalTimes) {
+  if(i %in% arrivalEpochs) {
     inc(Akt[totalCustomers])
     inc(totalCustomers)
     newPerson = as.proto(person$as.list())
@@ -95,11 +95,11 @@ for(i in timeSeq) {
   # Can we place someone into a slot?
   for(j in 1:numbServers) {
     # If this slot is free
-    if(!serviceCompletionTime[j]) { 
+    if(!serviceCompletionEpoch[j]) { 
       if(length(queue) > 0) {
         placedPerson = queue[[1]]
-        serviceCompletionTime[j] = i + placedPerson$serviceEpochsNeeded/precision
-        waitTimes = c(waitTimes, placedPerson$serviceEpochsWaited/precision)
+        serviceCompletionEpoch[j] = i + placedPerson$serviceEpochsNeeded
+        waitEpoch = c(waitEpoch, placedPerson$serviceEpochsWaited)
         # Only interested in these if person waited 1 or more intevals at front
         # of line
         if(placedPerson$serviceEpochsWaitedAtHeadOfQueue) {
@@ -123,16 +123,10 @@ for(i in timeSeq) {
     inc(queue[[1]]$serviceEpochsWaitedAtHeadOfQueue)
   }
   
-  if (i<2 & i>1.9){
-    print(c(length(queue), i, totalCustomers))
-  }
-  
   # End of the interval, what is the state of things
-  queueLengths[i*precision] = length(queue)
+  queueLengths[i] = length(queue)
   inc(Tkt[totalCustomers])
-  if (i<2 & i>1.9){
-    print(c(queueLengths[i*precision], length(queue), i*precision, totalCustomers))
-  }
+
 }
 
 #### Output ####
@@ -140,3 +134,6 @@ plot(queueLengths, type="o", col="blue", pch=20, main="Queue lengths over time",
      xlab="Interval", ylab="Queue length")
 # plot(totalCustomers, type="o", col="blue", pch=20, 
 #      main="Total Customers over time", xlab="Person", ylab="Wait time")
+
+plot(Akt/Tkt, xlim = c(0,20))
+plot(Dkt/Tkt, xlim = c(0,20))
