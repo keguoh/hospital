@@ -135,5 +135,5 @@ plot(queueLengths, type="o", col="blue", pch=20, main="Queue lengths over time",
 # plot(totalCustomers, type="o", col="blue", pch=20, 
 #      main="Total Customers over time", xlab="Person", ylab="Wait time")
 
-plot(Akt/Tkt, xlim = c(0,20))
-plot(Dkt/Tkt, xlim = c(0,20))
+plot(Akt/Tkt, xlim = c(0,200))
+plot(Dkt/Tkt, xlim = c(0,200))
