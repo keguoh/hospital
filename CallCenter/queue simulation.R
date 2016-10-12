@@ -1,5 +1,5 @@
 #### http://www.statisticsblog.com/2011/10/waiting-in-line-waiting-on-r/ ####
-tmax <- 20
+tmax <- 10000
 t <- 0
 numbServers = 40
 # Total time to track
@@ -7,9 +7,10 @@ precision = 1000  #precision
 epochSeq = seq(1, tmax*precision, 1)
 meanServiceTime = 1
 
+ptm = proc.time()
 #### NHPP Arrivals ####
 get_nhpp_realization <- function(lambda){
-  set.seed(1)
+  set.seed(10000)
   lambda_star <- function(){
     max(sapply(seq(1, tmax,length.out=1000), lambda))*2}
   Lambda <- function(tupper){
@@ -30,10 +31,12 @@ g = 1
 lambda <- function(t)  l*(1+b*sin(g*t))
 arrivalEpochs <- get_nhpp_realization(lambda)
 
+proc.time() - ptm
 # Average time each person takes at the teller, discretized exponential 
 # distribution assumed Times will be augmented by one, so that everyone takes at
 # least 1 interval to serve
-
+write.table(arrivalEpochs, file = "arrivalEpochs_tmax10000_prec1000.txt", 
+            row.names = F, col.names = F)
 
 #### Libraries ####
 # Use the proto library to treat people like objects in traditional oop
@@ -48,6 +51,9 @@ dec <- function(x) {
   eval.parent(substitute(x <- x - 1))
 }
 
+ptm = proc.time()
+set.seed(1)
+
 # Main object, really a "proto" function
 person <- proto(
   intervalArrived = 0,
@@ -60,15 +66,17 @@ person <- proto(
 #### INITIALIZATION ####
 queueLengths = rep(20.5, length(epochSeq))
 totalCustomers = 0
+numbCustomers = rep(20.5, length(epochSeq))
 serviceCompletionEpoch = rep(0, numbServers)
 waitEpoch = c()
 leavingTimes = c()
 queue = list()
 frontOfLineWaits = c()
-Akt = rep(0, length(arrivalEpochs))
-Dkt = rep(0, length(arrivalEpochs))
-Tkt = rep(0, length(arrivalEpochs))
+Akt = rep(0, length(arrivalEpochs))  #Akt, k=0,1,2,
+Dkt = rep(0, length(arrivalEpochs))  #Dkt, k=1,2,
+Tkt = rep(0, length(arrivalEpochs))  #Tkt, k=0,1,2
 
+k = 1 # counting arrival orders
 #### Main loop ####
 for(i in epochSeq) {
   # Check if anyone is leaving the servers
@@ -84,12 +92,13 @@ for(i in epochSeq) {
   
   
   # See if a new person is to be added to the queue
-  if(i %in% arrivalEpochs) {
-    inc(Akt[totalCustomers])
+  while(i == arrivalEpochs[k] & k <= length(arrivalEpochs)) {
+    inc(Akt[totalCustomers+1])
     inc(totalCustomers)
     newPerson = as.proto(person$as.list())
     newPerson$intervalArrived = i
     queue = c(queue, newPerson)
+    inc(k)
   }
   
   # Can we place someone into a slot?
@@ -125,15 +134,66 @@ for(i in epochSeq) {
   
   # End of the interval, what is the state of things
   queueLengths[i] = length(queue)
-  inc(Tkt[totalCustomers])
-
+  numbCustomers[i] = totalCustomers
+  inc(Tkt[totalCustomers+1])
 }
 
 #### Output ####
 plot(queueLengths, type="o", col="blue", pch=20, main="Queue lengths over time",
      xlab="Interval", ylab="Queue length")
+plot(numbCustomers, type="o", col="blue", pch=20, main="# of Customers over time",
+     xlab="Interval", ylab="Queue length")
 # plot(totalCustomers, type="o", col="blue", pch=20, 
 #      main="Total Customers over time", xlab="Person", ylab="Wait time")
+proc.time() - ptm
 
-plot(Akt/Tkt, xlim = c(0,200))
-plot(Dkt/Tkt, xlim = c(0,200))
+
+max(which(Dkt != 0)) == max(which(Akt != 0))
+max(which(Dkt != 0)) == max(which(Tkt != 0)) - 1
+m = max(which(Dkt != 0))
+lamb = Akt[1:m]/Tkt[1:m]    # lamb_0, lamb_1 ,..., mu_(m-1)
+mu = Dkt[1:m]/Tkt[2:(m+1)]  # mu_1, mu_2 ,..., mu_m
+
+lamb
+mu
+plot(9:59, lamb[10:60])
+plot(10:60, mu[10:60])
+
+# lamb[is.nan(lamb)] = 0
+# lamb[lamb == 0] = 0.001
+# lamb[is.infinite(lamb)] = max(lamb)
+# mu[is.nan(mu)] = 0
+mu[mu == 0] = 0.001
+# lamb[is.infinite(mu)] = max(mu)
+
+
+
+rkt = rep(1,m+1) # r0, r1, ... ,
+for(i in 2:m+1){
+  rkt[i] = prod(lamb[1:(i-1)])/prod(mu[1:(i-1)])
+}
+rkt
+
+alphakt = rep(0,m+1)
+for (i in 1:(m+1)){
+  alphakt[i] = rkt[i]/sum(rkt)
+}
+alphakt
+plot(x=1:(m+1), y=alphakt)
+
+Dkt2 = Dkt
+Dkt2[Dkt == 0] = 0.1
+mu2 = Dkt2[1:m]/Tkt[2:(m+1)]  #mu_1, mu_2 ,..., mu_m
+mu2
+rkt2 = rep(1,m+1) # r0, r1, ... ,
+for(i in 2:m+1){
+  rkt2[i] = prod(lamb[1:(i-1)])/prod(mu2[1:(i-1)])
+}
+rkt2
+
+alphakt2 = rep(0,m+1)
+for (i in 1:(m+1)){
+  alphakt2[i] = rkt2[i]/sum(rkt2)
+}
+alphakt2
+plot(x=1:(m+1), y=alphakt2)
