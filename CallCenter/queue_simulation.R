@@ -1,11 +1,12 @@
 #### http://www.statisticsblog.com/2011/10/waiting-in-line-waiting-on-r/ ####
-tmax <- 10000
+tmax <- 1
 t <- 0
-numbServers = 40
+numbServers = 4
 # Total time to track
-precision = 1000  #precision
+precision = 100  #precision
 epochSeq = seq(1, tmax*precision, 1)
-meanServiceTime = 1
+meanServiceTime = .1
+meanPatientTime = .01
 
 ptm = proc.time()
 #### NHPP Arrivals ####
@@ -31,12 +32,16 @@ g = 1
 lambda <- function(t)  l*(1+b*sin(g*t))
 arrivalEpochs <- get_nhpp_realization(lambda)
 
-proc.time() - ptm
+ptm1 = proc.time()
+t_np = ptm1 - ptm
+cat("The non-poisson simulation takes", t_np, "s" )
 # Average time each person takes at the teller, discretized exponential 
 # distribution assumed Times will be augmented by one, so that everyone takes at
 # least 1 interval to serve
-write.table(arrivalEpochs, file = "arrivalEpochs_tmax10000_prec1000.txt", 
-            row.names = F, col.names = F)
+
+
+# write.table(arrivalEpochs, file = "arrivalEpochs_tmax10000_prec1000.txt", 
+            # row.names = F, col.names = F)
 
 #### Libraries ####
 # Use the proto library to treat people like objects in traditional oop
@@ -51,7 +56,6 @@ dec <- function(x) {
   eval.parent(substitute(x <- x - 1))
 }
 
-ptm = proc.time()
 set.seed(1)
 
 # Main object, really a "proto" function
@@ -60,15 +64,18 @@ person <- proto(
   # How much teller time will this person demand?
   serviceEpochsNeeded = (floor(rexp(1, 1/meanServiceTime)*precision) + 1),
   serviceEpochsWaited = 0,
-  serviceEpochsWaitedAtHeadOfQueue = 0
+  serviceEpochsWaitedAtHeadOfQueue = 0,
+  patientEpochs = (floor(rexp(1, 1/meanPatientTime)*precision) + 1)
 )
 
 #### INITIALIZATION ####
 queueLengths = rep(20.5, length(epochSeq))
 totalCustomers = 0
+totalAbandons = 0
 numbCustomers = rep(20.5, length(epochSeq))
 serviceCompletionEpoch = rep(0, numbServers)
 waitEpoch = c()
+abandonEpoch = c()
 leavingTimes = c()
 queue = list()
 frontOfLineWaits = c()
@@ -101,6 +108,20 @@ for(i in epochSeq) {
     inc(k)
   }
   
+  
+  # If anyone is dropping the waiting line?
+  if(length(queue)) {
+    for(j in length(queue):1) {
+      if(queue[[j]]$serviceEpochsWaited >= queue[[j]]$patientEpochs){
+        queue[[j]] = NULL
+        inc(totalAbandons)
+        abandonEpoch = c(abandonEpoch, i)
+        dec(totalCustomers)
+      }
+    }
+  }
+  
+  
   # Can we place someone into a slot?
   for(j in 1:numbServers) {
     # If this slot is free
@@ -124,19 +145,22 @@ for(i in epochSeq) {
   
   # Everyone left in the queue has now waited one more interval to be served
   if(length(queue)) {
-    for(j in 1:length(queue)) {
+    for(j in length(queue):1) {
       inc(queue[[j]]$serviceEpochsWaited)
     }
     # The (possibley new) person at the front of the queue has had to wait 
     # there one more interval.
     inc(queue[[1]]$serviceEpochsWaitedAtHeadOfQueue)
   }
+
   
   # End of the interval, what is the state of things
   queueLengths[i] = length(queue)
   numbCustomers[i] = totalCustomers
   inc(Tkt[totalCustomers+1])
 }
+
+
 
 #### Output ####
 plot(queueLengths, type="o", col="blue", pch=20, main="Queue lengths over time",
@@ -145,7 +169,11 @@ plot(numbCustomers, type="o", col="blue", pch=20, main="# of Customers over time
      xlab="Interval", ylab="Queue length")
 # plot(totalCustomers, type="o", col="blue", pch=20, 
 #      main="Total Customers over time", xlab="Person", ylab="Wait time")
-proc.time() - ptm
+
+ptm2 = proc.time()
+t_sim = ptm2[3] - ptm1[3]
+cat("The simulation takes", t_sim, "s" )
+
 
 
 max(which(Dkt != 0)) == max(which(Akt != 0))
@@ -197,3 +225,5 @@ for (i in 1:(m+1)){
 }
 alphakt2
 plot(x=1:(m+1), y=alphakt2)
+
+ptm2 = proc.time()
