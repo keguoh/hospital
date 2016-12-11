@@ -1,12 +1,12 @@
 #### http://www.statisticsblog.com/2011/10/waiting-in-line-waiting-on-r/ ####
-tmax <- 1
+tmax <- 10000
 t <- 0
-numbServers = 4
+numbServers = 40
 # Total time to track
-precision = 100  #precision
+precision = 1000  #precision
 epochSeq = seq(1, tmax*precision, 1)
-meanServiceTime = .1
-meanPatientTime = .01
+meanServiceTime = 1
+meanPatientTime = 10
 
 ptm = proc.time()
 #### NHPP Arrivals ####
@@ -42,6 +42,9 @@ cat("The non-poisson simulation takes", t_np, "s" )
 
 # write.table(arrivalEpochs, file = "arrivalEpochs_tmax10000_prec1000.txt", 
             # row.names = F, col.names = F)
+arrivalEpochs <- read.table(file = "C:/Users/Keguo/Dropbox/GitHub/queue-systems/CallCenter/arrivalEpochs_tmax10000_prec1000_g1.txt",)$V1
+arrivalEpochs <- arrivalEpochs[1:50000]
+epochSeq = seq(1, max(arrivalEpochs)+50, 1)
 
 #### Libraries ####
 # Use the proto library to treat people like objects in traditional oop
@@ -185,7 +188,7 @@ mu = Dkt[1:m]/Tkt[2:(m+1)]  # mu_1, mu_2 ,..., mu_m
 lamb
 mu
 plot(9:59, lamb[10:60])
-plot(10:60, mu[10:60])
+plot(10:50, mu[10:50])
 
 # lamb[is.nan(lamb)] = 0
 # lamb[lamb == 0] = 0.001
