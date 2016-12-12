@@ -4,13 +4,41 @@ t <- 0
 numbServers = 40
 # Total time to track
 precision = 1000  #precision
-# epochSeq = seq(1, tmax*precision, 1)
+epochSeq = seq(1, tmax*precision, 1)
 meanServiceTime = 1
-meanPatientTime = 1
+meanPatientTime = 10
 
+ptm = proc.time()
+
+#### NHPP Arrivals ####
+get_nhpp_realization <- function(lambda){
+  set.seed(10000)
+  lambda_star <- function(){
+    max(sapply(seq(1, tmax,length.out=1000), lambda))*2}
+  Lambda <- function(tupper){
+    integrate(f = lambda, lower = 0, upper = tupper)$value}
+  X <- numeric()
+  while(t <= tmax){
+    u <- runif(1)
+    t <- t - log(u)/lambda_star()
+    if(runif(1) < lambda(t)/lambda_star()) {
+      X <- c(X,t)
+    }
+  }
+  return(floor(X*precision))
+}
+l = 35
+b = 10/35
+g = 1
+lambda <- function(t)  l*(1+b*sin(g*t))
+arrivalEpochs <- get_nhpp_realization(lambda)
 
 ptm1 = proc.time()
 t_np = ptm1 - ptm
+cat("The non-poisson simulation takes", t_np, "s" )
+# Average time each person takes at the teller, discretized exponential 
+# distribution assumed Times will be augmented by one, so that everyone takes at
+# least 1 interval to serve
 
 
 # write.table(arrivalEpochs, file = "arrivalEpochs_tmax10000_prec1000.txt", 
@@ -93,9 +121,7 @@ for(i in epochSeq) {
         queue[[j]] = NULL
         inc(totalAbandons)
         abandonEpoch = c(abandonEpoch, i)
-        inc(Dkt[totalCustomers])
         dec(totalCustomers)
-        cat('happened!')
       }
     }
   }
@@ -138,20 +164,20 @@ for(i in epochSeq) {
   numbCustomers[i] = totalCustomers
   inc(Tkt[totalCustomers+1])
 }
-ptm2 = proc.time()
-t_sim = ptm2[3] - ptm1[3]
-cat("The simulation takes", t_sim, "s" )
 
 
 
 #### Output ####
-plot(queueLengths[0:2000], type="o", col="blue", pch=20, main="Queue lengths over time",
+plot(queueLengths, type="o", col="blue", pch=20, main="Queue lengths over time",
      xlab="Interval", ylab="Queue length")
-plot(numbCustomers[0:1000], type="o", col="blue", pch=20, main="# of Customers over time",
+plot(numbCustomers, type="o", col="blue", pch=20, main="# of Customers over time",
      xlab="Interval", ylab="Queue length")
 # plot(totalCustomers, type="o", col="blue", pch=20, 
 #      main="Total Customers over time", xlab="Person", ylab="Wait time")
 
+ptm2 = proc.time()
+t_sim = ptm2[3] - ptm1[3]
+cat("The simulation takes", t_sim, "s" )
 
 
 
@@ -164,7 +190,7 @@ mu = Dkt[1:m]/Tkt[2:(m+1)]  # mu_1, mu_2 ,..., mu_m
 lamb
 mu
 plot(9:59, lamb[10:60])
-plot(10:40, mu[10:40])
+plot(10:60, mu[10:60])
 
 # lamb[is.nan(lamb)] = 0
 # lamb[lamb == 0] = 0.001
