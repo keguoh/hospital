@@ -1,44 +1,43 @@
+#### http://www.statisticsblog.com/2011/10/waiting-in-line-waiting-on-r/ ####
+tmax <- 100000
+t <- 0
+numbServers = 40
+# Total time to track
+precision = 1000  #precision
+
+ptm = proc.time()
+
+#### NHPP Arrivals ####
 get_nhpp_realization <- function(lambda){
-  set.seed(1)
-  t_max <- 10
-  t <- 0
+  set.seed(10000)
   lambda_star <- function(){
-    max(sapply(seq(1, t_max,length.out=1000), lambda))*2}
+    max(sapply(seq(1, tmax,length.out=1000), lambda))*2}
   Lambda <- function(tupper){
     integrate(f = lambda, lower = 0, upper = tupper)$value}
   X <- numeric()
-  while(t <= t_max){
+  while(t <= tmax){
     u <- runif(1)
     t <- t - log(u)/lambda_star()
     if(runif(1) < lambda(t)/lambda_star()) {
       X <- c(X,t)
     }
   }
-  return(X)
+  return(floor(X*precision))
 }
+
 l = 35
 b = 10/35
 g = 1
 lambda <- function(t)  l*(1+b*sin(g*t))
-res_1 <- get_nhpp_realization(lambda)
-length(res_1)
-hist(res_1)
+arrivalEpochs <- get_nhpp_realization(lambda)
+
+ptm1 = proc.time()
+t_np = ptm1 - ptm
+cat("The non-poisson simulation takes", t_np, "s" )
+# Average time each person takes at the teller, discretized exponential 
+# distribution assumed Times will be augmented by one, so that everyone takes at
+# least 1 interval to serve
 
 
-bs <- c(0.01, 0.1, 1)
-b <- bs[1]
-lambda <- function(t)  l*(1+b*sin(g*t))
-res_1 <- get_nhpp_realization(lambda)
-n_1 <- length(res_1)
-b <- bs[2]
-lambda <- function(t) b*t^2
-res_2 <- get_nhpp_realization(lambda)
-n_2 <- length(res_2)
-b <- bs[3]
-lambda <- function(t) b*t^2
-res_3 <- get_nhpp_realization(lambda)
-n_3 <- length(res_3)
-
-plot(stepfun(res_1,c(0:length(res_1))),xlim = c(0,10),do.points = F,main="L=0.5")
-plot(stepfun(res_2,c(0:length(res_2))),xlim = c(0,10),do.points = F,main="L=0.5")
-plot(stepfun(res_3,c(0:length(res_3))),xlim = c(0,10),do.points = F,main="L=0.5")
+write.table(arrivalEpochs, file = "arrivalEpochs_tmax100000_prec1000.txt", 
+ row.names = F, col.names = F)
