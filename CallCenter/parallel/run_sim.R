@@ -1,24 +1,36 @@
 ptm<-proc.time()
 library(parallel)
-source('C:/Users/Keguo/Dropbox/GitHub/queue-systems/Callcenter/parallel/nhpp.R')
+source('C:/Users/Keguo/Dropbox/GitHub/queue-systems/Callcenter/parallel/piecewise_mu.R')
 
 ind = 1:3
 
 (no_cores <- detectCores())
-cl <- makeCluster(no_cores-1)
+no_cl = no_cores -1
+cl <- makeCluster(no_cl)
 sequ <- parLapply(cl, ind, nhpp)
 ptm1 = proc.time()
 t_np = ptm1 - ptm
 cat("The non-poisson simulation takes", t_np[3]/60, "min" )
-
 stopCluster(cl)
 
+len <- c()
+for(i in 1:no_cl){
+  len <- c(len, length(sequ[[i]][[3]]))
+}
+len_max = max(len)
 
-queueLengths <- sequ[[1]]
-numbCustomers <- sequ[[2]]
-Akt <- sequ[[3]]
-Dkt <- sequ[[4]]
-Tkt <- sequ[[5]]
+Akt = rep(0,len_max)
+Dkt = rep(0,len_max)
+Tkt = rep(0,len_max)
+for(i in 1:no_cl){
+  Akt <- Akt + c(sequ[[i]][[3]], rep(0,len_max-len[i]))      #only takes the first 200
+  Dkt <- Dkt + c(sequ[[i]][[4]], rep(0,len_max-len[i]))
+  Tkt <- Tkt + c(sequ[[i]][[5]], rep(0,len_max-len[i]))
+}
+
+queueLengths <- sequ[[1]][[1]]
+numbCustomers <- sequ[[1]][[2]]
+
 #### Output ####
 plot(queueLengths[0:25000], type="o", col="blue", pch=20, main="Queue lengths over time",
      xlab="Interval", ylab="Queue length")
@@ -40,7 +52,9 @@ mu = Dkt[1:m]/Tkt[2:(m+1)]  # mu_1, mu_2 ,..., mu_m
 lamb
 mu
 plot(20:60, lamb[21:61])
+plot(1:100, lamb[2:101])
 plot(20:60, mu[20:60])
+plot(1:100, mu[2:101])
 
 
 

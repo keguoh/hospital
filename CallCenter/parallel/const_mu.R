@@ -1,14 +1,31 @@
-#### http://www.statisticsblog.com/2011/10/waiting-in-line-waiting-on-r/ ####
-
-run_pw <- function(rep=1){
-  numbServers = 50
-  numbServers_min = 30
-  precision = 1000  #precision
+nhpp <- function(seed){
+  set.seed(seed)
+  l = 35
+  b = 10/35
+  g = 1
+  lambda <- function(t)  l*(1+b*sin(g*t))
+  precision = 1000
+  t = 0
+  tmax = 20
+  numbServers = 40
   transitionTime = 10000
   meanServiceTime = 1
   # meanPatientTime = 1
   
-  arrivalEpochs <- sequ[rep]
+  
+  
+  lambda_star <- function(){
+    max(sapply(seq(1, tmax,length.out=1000), lambda))*2}
+  X <- numeric()
+  while(t <= tmax){
+    u <- runif(1)
+    t <- t - log(u)/lambda_star()
+    if(runif(1) < lambda(t)/lambda_star()) {
+      X <- c(X,t)
+    }
+  }
+  # return(floor(X*precision))
+  arrivalEpochs = floor(X*precision)
   epochSeq = seq(1, max(arrivalEpochs)+50, 1)
   
   #### Libraries ####
@@ -24,7 +41,6 @@ run_pw <- function(rep=1){
     eval.parent(substitute(x <- x - 1))
   }
   
-  set.seed(rep)
   # Main object, really a "proto" function
   person <- proto(
     intervalArrived = 0,
@@ -32,7 +48,7 @@ run_pw <- function(rep=1){
     serviceEpochsNeeded = (floor(rexp(1, 1/meanServiceTime)*precision) + 1),
     serviceEpochsWaited = 0,
     serviceEpochsWaitedAtHeadOfQueue = 0,
-    patientEpochs = (floor(rexp(1, 1/meanPatientTime)*precision) + 1)
+    # patientEpochs = (floor(rexp(1, 1/meanPatientTime)*precision) + 1)
   )
   
   #### INITIALIZATION ####
@@ -98,21 +114,18 @@ run_pw <- function(rep=1){
       # If this slot is free
       if(!serviceCompletionEpoch[j]) { 
         if(length(queue) > 0) {
-          if(j<=numbServers_min | floor(i/transitionTime)%%2==0){
-            placedPerson = queue[[1]]
-            serviceCompletionEpoch[j] = i + placedPerson$serviceEpochsNeeded
-            waitEpoch = c(waitEpoch, placedPerson$serviceEpochsWaited)
-            # Only interested in these if person waited 1 or more intevals at front
-            # of line
-            if(placedPerson$serviceEpochsWaitedAtHeadOfQueue) {
-              frontOfLineWaits = c(frontOfLineWaits, 
-                                   placedPerson$serviceEpochsWaitedAtHeadOfQueue)
-            }
-            
-            # Remove placed person from queue
-            queue[[1]] = NULL
-            break
+          placedPerson = queue[[1]]
+          serviceCompletionEpoch[j] = i + placedPerson$serviceEpochsNeeded
+          waitEpoch = c(waitEpoch, placedPerson$serviceEpochsWaited)
+          # Only interested in these if person waited 1 or more intevals at front
+          # of line
+          if(placedPerson$serviceEpochsWaitedAtHeadOfQueue) {
+            frontOfLineWaits = c(frontOfLineWaits, 
+                                 placedPerson$serviceEpochsWaitedAtHeadOfQueue)
           }
+          
+          # Remove placed person from queue
+          queue[[1]] = NULL
         }
       }
     }

@@ -6,7 +6,13 @@ nhpp <- function(seed){
   lambda <- function(t)  l*(1+b*sin(g*t))
   precision = 1000
   t = 0
-  tmax = 20
+  tmax = 50  
+  numbServers = 50
+  numbServers_min = 30
+  transitionTime = 10000
+  meanServiceTime = 1
+  # meanPatientTime = 1
+  
   lambda_star <- function(){
     max(sapply(seq(1, tmax,length.out=1000), lambda))*2}
   X <- numeric()
@@ -18,18 +24,11 @@ nhpp <- function(seed){
     }
   }
   # return(floor(X*precision))
-  sequ = floor(X*precision)
+  arrivalEpochs = floor(X*precision)
   
-  numbServers = 50
-  numbServers_min = 30
-  precision = 1000  #precision
-  transitionTime = 10000
-  meanServiceTime = 1
-  # meanPatientTime = 1
-  
-  arrivalEpochs <- sequ
   epochSeq = seq(1, max(arrivalEpochs)+50, 1)
   
+
   #### Libraries ####
   # Use the proto library to treat people like objects in traditional oop
   library("proto")
