@@ -32,13 +32,12 @@ totalCustomers = 0
 totalAbandons = 0
 serviceCompletionEpoch = rep(0, numbServers)
 k = 1 # counting arrival orders
-
-queueLengths = rep(20.5, length(timeline))
-numbCustomers = rep(20.5, length(timeline))
-waitEpoch = c()
 abandonEpoch = c()
 queue = list()
 frontOfLineWaits = c()
+queueLengths = rep(20.5, length(timeline))
+numbCustomers = rep(20.5, length(timeline))
+waitEpoch = c()
 
 ptm1 = proc.time()
 
@@ -92,8 +91,6 @@ for(i in timeline) {
           frontOfLineWaits = c(frontOfLineWaits, 
                                placedPerson$serviceTimeWaitedAtHeadOfQueue)
         }
-        
-        # Remove placed person from queue
         queue[[1]] = NULL
       }
     }
@@ -113,7 +110,6 @@ for(i in timeline) {
   # End of the interval, what is the state of things
   queueLengths[i] = length(queue)
   numbCustomers[i] = totalCustomers
-  inc(Tkt[totalCustomers+1])
 }
 ptm2 = proc.time()
 t_sim = ptm2[3] - ptm1[3]
