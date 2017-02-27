@@ -1,7 +1,8 @@
+library(proto)
 arrivalEpochs <- read.table(file = "C:/Users/Keguo/Dropbox/GitHub/queue-systems/CallCenter/arrivalEpochs_tmax10000_prec1000_g1.txt",)$V1
 arrivalEpochs <- arrivalEpochs[1:5]
 timeline <- seq(1, max(arrivalEpochs), 1)
-serviceTimeSeq <- rep(4,5)
+serviceTimeSeq <- rep(20,5)
 patientTimeSeq <- rep(10,5)
 #### Functions ####
 # R is missing a nice way to do ++, so we use this
@@ -66,7 +67,7 @@ for(i in timeline) {
   # If anyone is dropping the waiting line?
   if(length(queue)) {
     for(j in length(queue):1) {
-      if(queue[[j]]$serviceTimeWaited >= queue[[j]]$patientEpochs){
+      if(queue[[j]]$serviceTimeWaited >= queue[[j]]$patientTime){
         queue[[j]] = NULL
         inc(totalAbandons)
         abandonEpoch = c(abandonEpoch, i)
@@ -114,3 +115,9 @@ for(i in timeline) {
 ptm2 = proc.time()
 t_sim = ptm2[3] - ptm1[3]
 cat("The simulation takes", t_sim, "s" )
+
+plot(queueLengths, type="o", col="blue", pch=20, main="Queue lengths over time",
+     xlab="Interval", ylab="Queue length")
+plot(numbCustomers, type="o", col="blue", pch=20, main="# of Customers over time",
+     xlab="Interval", ylab="Queue length")
+
