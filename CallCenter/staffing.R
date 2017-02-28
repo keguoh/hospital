@@ -24,7 +24,7 @@ person <- proto(
   patientTime = 0
 )
 
-numbServers = 7
+numbServers = 6
 
 
 
@@ -81,7 +81,7 @@ for(i in timeline) {
   # Can we place someone into a slot?
   for(j in 1:numbServers) {
     # If this slot is free
-    if(!serviceCompletionEpoch[j]) { 
+    if(serviceCompletionEpoch[j]==0) { 
       if(length(queue) > 0) {
         placedPerson = queue[[1]]
         serviceCompletionEpoch[j] = i + placedPerson$serviceTimeNeeded
@@ -120,4 +120,5 @@ plot(queueLengths[1:7200], type="o", col="blue", pch=20, main="Queue lengths ove
      xlab="Interval", ylab="Queue length")
 plot(numbCustomers[1:7200], type="o", col="blue", pch=20, main="# of Customers over time",
      xlab="Interval", ylab="# of customers in system")
+totalAbandons
 totalAbandons/length(arrivalEpochs)
