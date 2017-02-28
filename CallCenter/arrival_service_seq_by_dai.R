@@ -1,25 +1,47 @@
 ### get the arrival time and service time for Oct ###
 data <- read.table(file = "C:/Users/Keguo/Dropbox/GitHub/queue-systems/CallCenter/october.txt", header = T)
-data[1:10,]
+head(data)
 ## we only need "PS" type service and q_start greater than 0 with service time greater than 0 ##
 ## "PS" type
+q_start <- strptime(paste(data$date, data$q_start), format='%y%m%d %H:%M:%S')
+data$day_of_month <- as.numeric(format(q_start, '%d'))
+data$q_start_hour_of_day <- as.numeric(format(q_start, '%H'))
+data$q_start_min_of_hour <- as.numeric(format(q_start, '%M'))
+data$q_start_sec_of_min <- as.numeric(format(q_start, '%S'))
+data$q_start_sec_of_day <- (data$q_start_hour_of_day*3600 
+                            + data$q_start_min_of_hour*60
+                            + data$q_start_sec_of_min)
+data$ser_start_day_of_month <- as.numeric(format(ser_start, '%d'))
+data$ser_start_hour_of_day <- as.numeric(format(ser_start, '%H'))
+data$ser_start_min_of_hour <- as.numeric(format(ser_start, '%M'))
+data$ser_start_sec_of_min <- as.numeric(format(ser_start, '%S'))
+data$ser_start_sec_of_day <- (data$ser_start_hour_of_day*3600 
+                            + data$ser_start_min_of_hour*60
+                            + data$ser_start_sec_of_min)
+
 data_PS <- split(data, data$type )$PS
-q.need <- data_PS[,c(6,10,14,16)]
-head(q.need)
-q.start <- strptime(paste(data_PS$date, q.need$q_start), format='%y%m%d %H:%M:%S')
-q.index <- rep(0, length(q.start))
-## get the one hour function ###
-Oct1 <- strptime("991001 00:00:00", format='%y%m%d %H:%M:%S')
-hrs <- function(u) {
-  x <- u * 3600
-  return(x)
+
+# valid data (positive service time or queue time)
+data_valid <- data_PS[data_PS$ser_time > 0 | data_PS$q_time > 0,]
+head(data_valid[,c('q_start_sec_of_day','ser_start_sec_of_day')],50)
+data_valid$arrival_sec_of_day = -1
+for(i in 1:nrow(data_valid)){
+  if(data_valid$q_time[i] > 0){
+    data_valid$arrival_sec_of_day[i] <- data_valid$q_start_sec_of_day[i]
+  } else{data_valid$arrival_sec_of_day[i] <- data_valid$ser_start_sec_of_day[i]}
 }
-## q_start between 7-24 ###
-for(i in 1:length(q.start)){
-  for (k in 1:31){
-    if(q.start[i] < Oct1 + hrs(24*k-17) && q.start[i] >= Oct1 + hrs(24*k-24) - 1) {q.index[i] <- i}}
-}
-q.need2 <- q.need[-q.index,]
-## service time should greater than 0 ###
-q.need.new <- q.need2[q.need2$ser_time > 0,3:4]
-head(q.need.new,20)
+
+
+# arrival time for the first day
+dat1 <- data_valid[data_valid$day_of_month==1,]
+arrivalEpoch <- sort(dat1$arrival_sec_of_day - 3600*7)
+
+# service time
+serviceTime <- data_valid$ser_time[data_valid$ser_time > 0]
+hist(serviceTime, breaks = 1000, xlim = c(0,1000))
+#patient time
+patientTime <- data_PS$q_time[data_PS$outcome=='HANG' & data_PS$q_time>0]
+length(patientTime)
+hist(patientTime, breaks=60)
+
+
