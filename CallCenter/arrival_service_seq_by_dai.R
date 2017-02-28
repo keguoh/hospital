@@ -4,6 +4,7 @@ head(data)
 ## we only need "PS" type service and q_start greater than 0 with service time greater than 0 ##
 ## "PS" type
 q_start <- strptime(paste(data$date, data$q_start), format='%y%m%d %H:%M:%S')
+data$q_start_date <- q_start
 data$day_of_month <- as.numeric(format(q_start, '%d'))
 data$q_start_hour_of_day <- as.numeric(format(q_start, '%H'))
 data$q_start_min_of_hour <- as.numeric(format(q_start, '%M'))
@@ -11,6 +12,8 @@ data$q_start_sec_of_min <- as.numeric(format(q_start, '%S'))
 data$q_start_sec_of_day <- (data$q_start_hour_of_day*3600 
                             + data$q_start_min_of_hour*60
                             + data$q_start_sec_of_min)
+ser_start <- strptime(paste(data$date, data$ser_start), format='%y%m%d %H:%M:%S')
+data$ser_start_date <- ser_start
 data$ser_start_day_of_month <- as.numeric(format(ser_start, '%d'))
 data$ser_start_hour_of_day <- as.numeric(format(ser_start, '%H'))
 data$ser_start_min_of_hour <- as.numeric(format(ser_start, '%M'))
@@ -32,9 +35,14 @@ for(i in 1:nrow(data_valid)){
 }
 
 
-# arrival time for the first day
+# arrival time for one day
 dat1 <- data_valid[data_valid$day_of_month==1,]
 arrivalEpoch <- sort(dat1$arrival_sec_of_day - 3600*7)
+dat2 <- data_valid[data_valid$day_of_month==2,]
+arrivalEpoch <- sort(dat2$arrival_sec_of_day - 3600*7)
+
+dat3 <- data_valid[data_valid$day_of_month==3,]
+arrivalEpochs3 <- sort(dat3$arrival_sec_of_day - 3600*7)
 
 # service time
 serviceTime <- data_valid$ser_time[data_valid$ser_time > 0]
