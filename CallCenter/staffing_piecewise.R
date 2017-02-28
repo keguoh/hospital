@@ -24,7 +24,8 @@ person <- proto(
   patientTime = 0
 )
 
-numbServers = 7
+numbServers_high = 8
+numbServers_low = 6
 
 
 
@@ -32,7 +33,7 @@ numbServers = 7
 
 totalCustomers = 0
 totalAbandons = 0
-serviceCompletionEpoch = rep(0, numbServers)
+serviceCompletionEpoch = rep(0, numbServers_high)
 k = 1 # counting arrival orders
 abandonEpoch = c()
 queue = list()
@@ -46,7 +47,7 @@ ptm1 = proc.time()
 #### Main loop ####
 for(i in timeline) {
   # Check if anyone is leaving the servers
-  for(j in 1:numbServers) {
+  for(j in 1:numbServers_high) {
     if(serviceCompletionEpoch[j] == i) {
       dec(totalCustomers)
       # They are leaving the queue, slot to 0
@@ -64,7 +65,6 @@ for(i in timeline) {
     inc(k)
   }
   
-  
   # If anyone is dropping the waiting line?
   if(length(queue)) {
     for(j in length(queue):1) {
@@ -77,22 +77,24 @@ for(i in timeline) {
     }
   }
   
-  
   # Can we place someone into a slot?
-  for(j in 1:numbServers) {
+  for(j in 1:numbServers_high) {
     # If this slot is free
     if(!serviceCompletionEpoch[j]) { 
       if(length(queue) > 0) {
-        placedPerson = queue[[1]]
-        serviceCompletionEpoch[j] = i + placedPerson$serviceTimeNeeded
-        waitEpoch = c(waitEpoch, placedPerson$serviceTimeWaited)
-        # Only interested in these if person waited 1 or more intevals at front
-        # of line
-        if(placedPerson$serviceTimeWaitedAtHeadOfQueue) {
-          frontOfLineWaits = c(frontOfLineWaits, 
-                               placedPerson$serviceTimeWaitedAtHeadOfQueue)
+        if(j<=numbServers_low | i<3600*8){
+          placedPerson = queue[[1]]
+          serviceCompletionEpoch[j] = i + placedPerson$serviceTimeNeeded
+          waitEpoch = c(waitEpoch, placedPerson$serviceTimeWaited)
+          # Only interested in these if person waited 1 or more intevals at front
+          # of line
+          if(placedPerson$serviceTimeWaitedAtHeadOfQueue) {
+            frontOfLineWaits = c(frontOfLineWaits, 
+                                 placedPerson$serviceTimeWaitedAtHeadOfQueue)
+          }
+          queue[[1]] = NULL
+          break
         }
-        queue[[1]] = NULL
       }
     }
   }
