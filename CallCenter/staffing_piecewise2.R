@@ -25,11 +25,6 @@ person <- proto(
 )
 
 numbServers_high = 7
-numbServers_low = 5
-
-
-
-
 
 totalCustomers = 0
 totalAbandons = 0
@@ -77,23 +72,25 @@ for(i in timeline) {
     }
   }
   
+  if(i <= 3600*8) {
+    numbServers = 7
+  }else numbServers = 5
+  
   # Can we place someone into a slot?
-  for(j in 1:numbServers_high) {
+  for(j in 1:numbServers) {
     # If this slot is free
     if(serviceCompletionEpoch[j]==0) { 
       if(length(queue) > 0) {
-        if(j<=numbServers_low | i<=3600*8){
-          placedPerson = queue[[1]]
-          serviceCompletionEpoch[j] = i + placedPerson$serviceTimeNeeded
-          waitEpoch = c(waitEpoch, placedPerson$serviceTimeWaited)
-          # Only interested in these if person waited 1 or more intevals at front
-          # of line
-          if(placedPerson$serviceTimeWaitedAtHeadOfQueue) {
-            frontOfLineWaits = c(frontOfLineWaits, 
-                                 placedPerson$serviceTimeWaitedAtHeadOfQueue)
-          }
-          queue[[1]] = NULL
+        placedPerson = queue[[1]]
+        serviceCompletionEpoch[j] = i + placedPerson$serviceTimeNeeded
+        waitEpoch = c(waitEpoch, placedPerson$serviceTimeWaited)
+        # Only interested in these if person waited 1 or more intevals at front
+        # of line
+        if(placedPerson$serviceTimeWaitedAtHeadOfQueue) {
+          frontOfLineWaits = c(frontOfLineWaits, 
+                               placedPerson$serviceTimeWaitedAtHeadOfQueue)
         }
+        queue[[1]] = NULL
       }
     }
   }

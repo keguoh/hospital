@@ -42,7 +42,7 @@ arrivalEpoch <- sort(dat1$arrival_sec_of_day)
 dat2 <- data_valid[data_valid$day_of_month==2,]
 arrivalEpoch <- sort(dat2$arrival_sec_of_day)
 dat3 <- data_valid[data_valid$day_of_month==3,]
-arrivalEpoch <- sort(dat3$arrival_sec_of_day)
+arrivalEpochs3 <- sort(dat3$arrival_sec_of_day)
 
 dat1 <- data_valid[data_valid$day_of_week==1,]
 arrivalEpochs1 <- sort(dat1$arrival_sec_of_day)
