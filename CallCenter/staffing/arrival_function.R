@@ -1,77 +1,20 @@
-### get the arrival time and service time for Nov/Dec ###
-dat1 <- read.table(file = "C:/Users/Keguo/Dropbox/GitHub/queue-systems/CallCenter/november.txt", header = T)
-q_start1 <- strptime(paste(dat1$date, dat1$q_start), format='%y%m%d %H:%M:%S')
-dat1$arrival_day_of_month <- as.numeric(format(q_start1, '%d'))
-dat1$arrival_day_of_week <- (dat1$arrival_day_of_month) %% 7 
-dat1$month <- 11
-
-dat2 <- read.table(file = "C:/Users/Keguo/Dropbox/GitHub/queue-systems/CallCenter/december.txt", header = T)
-q_start2 <- strptime(paste(dat2$date, dat2$q_start), format='%y%m%d %H:%M:%S')
-dat2$arrival_day_of_month <- as.numeric(format(q_start2, '%d'))
-dat2$arrival_day_of_week <- (dat2$arrival_day_of_month + 2) %% 7 
-dat2$month <- 12
-dat <- rbind(dat1, dat2)
-## we only need "PS" type service and q_start greater than 0 with service time greater than 0 ##
-## "PS" type
-dat <- split(dat, dat$type )$PS
-dat <- dat[dat$ser_time > 0 | dat$q_time > 0,]
-
-
-q_start <- strptime(paste(dat$date, dat$q_start), format='%y%m%d %H:%M:%S')
-q_start_hour_of_day <- as.numeric(format(q_start, '%H'))
-q_start_min_of_hour <- as.numeric(format(q_start, '%M'))
-q_start_sec_of_min <- as.numeric(format(q_start, '%S'))
-q_start_sec_of_day <- (q_start_hour_of_day*3600 
-                            + q_start_min_of_hour*60
-                            + q_start_sec_of_min)
-ser_start <- strptime(paste(dat$date, dat$ser_start), format='%y%m%d %H:%M:%S')
-ser_start_hour_of_day <- as.numeric(format(ser_start, '%H'))
-ser_start_min_of_hour <- as.numeric(format(ser_start, '%M'))
-ser_start_sec_of_min <- as.numeric(format(ser_start, '%S'))
-ser_start_sec_of_day <- (ser_start_hour_of_day*3600 
-                            + ser_start_min_of_hour*60
-                            + ser_start_sec_of_min)
-
-
-# valid dat (positive service time or queue time)
-dat$arrival_sec_of_day = -1
-for(i in 1:nrow(dat)){
-  if(dat$q_time[i] > 0){
-    dat$arrival_sec_of_day[i] <- q_start_sec_of_day[i]
-  } else{dat$arrival_sec_of_day[i] <- ser_start_sec_of_day[i]}
-}
-dat$arrival_min_of_hour = dat$arrival_sec_of_day%/%60%%60
-dat$arrival_hour_of_day = dat$arrival_sec_of_day%/%(60*60)
-
-# delete some data after midnight and before 7 am
-dat <- dat[dat$arrival_sec_of_day >= 7*60*60, ]
-write.csv(dat, file='Nov_Dec_data.csv')
-
-
-# service time
-serviceTime <- dat$ser_time[dat$ser_time > 0]
-length(serviceTime)
-hist(serviceTime, breaks = 1000, xlim = c(0,1000))
-
-#patient time
-patientTime <- dat$q_time[dat$outcome=='HANG' & dat$q_time>0]
-length(patientTime)
-hist(patientTime, breaks=60)
+#### Inital graphs ####
+attach(dat)
 
 # arrival time for one day / per hour
-d1 <- dat[dat$arrival_day_of_week==1,]
+d1 <- dat[arrival_day_of_week==1,]
 arrivalEpoch1 <- sort(d1$arrival_sec_of_day)
-d2 <- dat[dat$arrival_day_of_week==2,]
+d2 <- dat[arrival_day_of_week==2,]
 arrivalEpoch2 <- sort(d2$arrival_sec_of_day)
-d3 <- dat[dat$arrival_day_of_week==3,]
+d3 <- dat[arrival_day_of_week==3,]
 arrivalEpoch3 <- sort(d3$arrival_sec_of_day)
-d4 <- dat[dat$arrival_day_of_week==4,]
+d4 <- dat[arrival_day_of_week==4,]
 arrivalEpoch4 <- sort(d4$arrival_sec_of_day)
-d5 <- dat[dat$arrival_day_of_week==5,]
+d5 <- dat[arrival_day_of_week==5,]
 arrivalEpoch5 <- sort(d5$arrival_sec_of_day)
-d6 <- dat[dat$arrival_day_of_week==6,]
+d6 <- dat[arrival_day_of_week==6,]
 arrivalEpoch6 <- sort(d6$arrival_sec_of_day)
-d0 <- dat[dat$arrival_day_of_week==0,]
+d0 <- dat[arrival_day_of_week==0,]
 arrivalEpoch0 <- sort(d0$arrival_sec_of_day)
 
 a1 = cut(arrivalEpoch1, breaks = 3600*(7:24))
@@ -137,3 +80,75 @@ lines((28:95)/4+.125,as.vector(table(a5)), col=5, lwd=2)
 lines((28:95)/4+.125,as.vector(table(a6)), col=6, lwd=2)
 lines((28:95)/4+.125,as.vector(table(a0)), col=8, lwd=2)
 legend('topright', as.character(1:7), col=c(1:6,8), lwd=2, cex=.75)
+
+workdat <- dat[arrival_day_of_week<5, ]
+detach(dat)
+attach(workdat)
+
+# three cases for workdays
+a = cut(workdat$arrival_sec_of_day, breaks = 3600*(28:96)/4)
+plot(0, ylab = "# of arrivals", xlab = "hours of day", type = 'n', 
+     ylim = c(0,1400), xlim = c(7,23), 
+     main = 'arrivals over quarter-hour of day (workdays)')
+lines((28:95)/4+.125,as.vector(table(a)), col=1, lwd=2)
+
+a = cut(workdat$arrival_sec_of_day, breaks = 3600*(14:48)/2)
+plot(0, ylab = "# of arrivals", xlab = "hours of day", type = 'n', 
+     ylim = c(0,2800), xlim = c(7,23), 
+     main = 'arrivals over half-hour of day (workdays)')
+lines((14:47)/2+.25,as.vector(table(a)), col=1, lwd=2)
+
+a = cut(workdat$arrival_sec_of_day, breaks = 3600*(7:24))
+plot(0, ylab = "# of arrivals", xlab = "hours of day", type = 'n', 
+     ylim = c(0,5600), xlim = c(7,23), 
+     main = 'arrivals over hour of day (workdays)')
+lines((7:23)+.5,as.vector(table(a)), col=1, lwd=2)
+
+
+
+#### fit function ####
+X = aggregate(arrival_day_of_month, by=list(paste(month,arrival_day_of_month), arrival_day_of_week,arrival_hour_of_day), length)
+colnames(X) <- c('day', 'weekday', 'hour', 'arrivals')
+X$hour <- X$hour+.5
+X$hour2 <- (X$hour)^2
+X$hour3 <- (X$hour)^3
+X$hour4 <- (X$hour)^4
+X$hour5 <- (X$hour)^5
+X <- X[order(X$day), ]
+X1 <- X[X$weekday==1,]
+head(X1)
+plot(0, xlim = c(7,24), ylim = c(min(X1$arrivals), max(X1$arrivals)))
+for(i in 1:(nrow(X1)/17)){
+  lines(X1$hour[(i*17-16):(i*17)], X1$arrivals[(i*17-16):(i*17)])
+}
+
+## polynomials ##
+o1 <- lm(arrivals ~ 0 + factor(weekday) + hour:factor(weekday), data = X)
+b1 <- o1$coefficients
+abline(b1[2], b1[7], col=2,lwd=2)
+o2 <- lm(arrivals ~ 0 + factor(weekday) + hour:factor(weekday) 
+         + hour2:factor(weekday), data = X)
+b2 <- o2$coefficients
+x <- seq(7,24,by=.01)
+y <- b2[2] + b2[7]*x + b2[12]*x^2
+lines(x,y,col=3,lwd=2)
+o3 <- lm(arrivals ~ 0 + factor(weekday) + hour:factor(weekday) 
+         + hour2:factor(weekday) + hour3:factor(weekday), data = X)
+b3 <- o3$coefficients
+x <- seq(7,24,by=.01)
+y <- b3[2] + b3[7]*x + b3[12]*x^2 + b3[17]*x^3
+lines(x,y,col=4,lwd=2)
+o4 <- lm(arrivals ~ 0 + factor(weekday) + hour:factor(weekday) 
+         + hour2:factor(weekday) + hour3:factor(weekday) + hour4:factor(weekday), data = X)
+b4 <- o4$coefficients
+x <- seq(7,24,by=.01)
+y <- b4[2] + b4[7]*x + b4[12]*x^2 + b4[17]*x^3 + b4[22]*x^4
+lines(x,y,col=5,lwd=2)
+o5 <- lm(arrivals ~ 0 + factor(weekday) + hour:factor(weekday) 
+         + hour2:factor(weekday) + hour3:factor(weekday)
+         + hour4:factor(weekday) + hour5:factor(weekday), data = X)
+b5 <- o5$coefficients
+x <- seq(7,24,by=.01)
+y <- b5[2] + b5[7]*x + b5[12]*x^2 + b5[17]*x^3 + b5[22]*x^4 + b5[27]*x^5
+lines(x,y,col=6,lwd=2)
+legend('topright',as.character(1:5), title = 'order', col = 2:6, lwd=2)
