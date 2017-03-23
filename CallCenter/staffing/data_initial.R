@@ -45,15 +45,23 @@ dat$arrival_hour_of_day = dat$arrival_sec_of_day%/%(60*60)
 
 # delete some data after midnight and before 7 am
 dat <- dat[dat$arrival_sec_of_day >= 7*60*60, ]
-write.csv(dat, file='Nov_Dec_data.csv')
+write.csv(dat, file='data.csv')
+workdat <- dat[dat$arrival_day_of_week<5, ]
+write.csv(workdat, file='work_data.csv')
+write.table(workdat[, c('arrival_sec_of_day')], row.names = F, col.names = F,
+            file = 'arrival_pool.csv')
 
 
 # service time
 serviceTime <- dat$ser_time[dat$ser_time > 0]
 length(serviceTime)
 hist(serviceTime, breaks = 1000, xlim = c(0,1000))
+write.table(workdat$ser_time[workdat$ser_time > 0], row.names = F, col.names = F,
+            file = 'serv_time_pool.csv')
 
 #patient time
 patientTime <- dat$q_time[dat$outcome=='HANG' & dat$q_time>0]
 length(patientTime)
 hist(patientTime, breaks=60)
+write.table(workdat$q_time[workdat$outcome=='HANG' & workdat$q_time>0], 
+            row.names = F, col.names = F, file = 'patient_time_pool.csv')

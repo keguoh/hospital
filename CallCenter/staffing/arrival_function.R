@@ -1,5 +1,5 @@
-dat <- read.csv('C:/Users/Keguo/Dropbox/GitHub/queue-systems/CallCenter/staffing/Nov_Dec_data.csv', header = T)
-workdat <- dat[dat$arrival_day_of_week<5, ]
+dat <- read.csv('C:/Users/Keguo/Dropbox/GitHub/queue-systems/CallCenter/staffing/data.csv', header = T)
+workdat <- read.csv('C:/Users/Keguo/Dropbox/GitHub/queue-systems/CallCenter/staffing/work_data.csv', header = T)
 #### Inital graphs ####
 attach(dat)
 # arrival time for one day / per hour
@@ -158,22 +158,89 @@ legend('topright',as.character(1:5), title = 'order', col = 2:6, lwd=2)
 
 attach(workdat)
 #### mixed normal ####
+write.csv(X, file = "C:/Users/huangke.PHIBRED/Desktop/dat.csv")
+
+plot(0, xlim = c(7,24), ylim = c(0, max(X$arrivals)), 
+     main = 'three-normal for arrival rate function (Workdays)',
+     xlab = "Hours", ylab = '# of Arrivals')
+for(i in 1:(nrow(X)/17)){
+  lines(X$hour[(i*17-16):(i*17)], X$arrivals[(i*17-16):(i*17)])
+}
+x <- seq(7,24,by=.01)
+y1 <- 132.1*dnorm(x, 10.1462, .9537)
+y2 <- 1154.17*dnorm(x, 14.4786, 5.7442)
+lines(x,y1+y2,col=2,lwd=3)
+lines(x,y1,col=5,lwd=1)
+lines(x,y2,col=5,lwd=1)
+
+
+x <- seq(7,24,by=.01)
+y1 <- 254.4*dnorm(x, 10.1285, 1.2539)
+y2 <- 195.7*dnorm(x, 14.3525, 1.7120)
+y3 <- 915.78*dnorm(x, 17.3788, 7.3585)
+lines(x,y1+y2+y3,col=2,lwd=3)
+lines(x,y1,col=5,lwd=1)
+lines(x,y2,col=5,lwd=1)
+lines(x,y3,col=5,lwd=1)
+
+
+# Mondays
 X1 <- X[X$weekday==1,]
-head(X1)
-plot(0, xlim = c(7,24), ylim = c(min(X1$arrivals), max(X1$arrivals)), 
+write.csv(X1, file = "C:/Users/huangke.PHIBRED/Desktop/dat1.csv")
+
+plot(0, xlim = c(7,24), ylim = c(0, max(X1$arrivals)), 
      main = 'two-normal for arrival rate function (MONDAYS)',
      xlab = "Hours", ylab = '# of Arrivals')
 for(i in 1:(nrow(X1)/17)){
   lines(X1$hour[(i*17-16):(i*17)], X1$arrivals[(i*17-16):(i*17)])
 }
-
-library(minpack.lm)
-o <- nlsLM(arrivals ~ 1/sqrt(2*pi)/s1*exp(-(hour-mu1)^2/(2*s1^2)) 
-         + 1/sqrt(2*pi)/s2*exp(-(hour-mu2)^2/(2*s2^2)), data = X,
-         start=list(mu1=10, s1=1, mu2=15, s2=2), 
-         control = nls.control(maxiter = 100), trace=TRUE)
-b = coef(o)
 x <- seq(7,24,by=.01)
-y1 <- 1/sqrt(2*pi*b[2])*exp(-(x-b[1])^2/2/b[2])
-y2 <- 1/sqrt(2*pi*b[4])*exp(-(x-b[3])^2/2/b[4])
-lines(x,y1,col=3,lwd=2)
+y1 <- 139.88*dnorm(x, 10.0985, .9182)
+y2 <- 1234.41*dnorm(x, 14.797, 6.3778)
+lines(x,y1+y2,col=2,lwd=3)
+lines(x,y1,col=5,lwd=1)
+lines(x,y2,col=5,lwd=1)
+
+
+
+#Tuesday
+X2 <- X[X$weekday==2,]
+write.csv(X2, file = "C:/Users/huangke.PHIBRED/Desktop/dat2.csv")
+plot(0, xlim = c(7,24), ylim = c(0, max(X2$arrivals)), 
+     main = 'two-normal for arrival rate function (MONDAYS)',
+     xlab = "Hours", ylab = '# of Arrivals')
+for(i in 1:(nrow(X2)/17)){
+  lines(X2$hour[(i*17-16):(i*17)], X2$arrivals[(i*17-16):(i*17)])
+}
+
+## self try
+
+
+plot(0, xlim = c(7,24), ylim = c(0, max(X1$arrivals)), 
+     main = 'two-normal for arrival rate function (MONDAYS)',
+     xlab = "Hours", ylab = '# of Arrivals')
+for(i in 1:(nrow(X1)/17)){
+  lines(X1$hour[(i*17-16):(i*17)], X1$arrivals[(i*17-16):(i*17)])
+}
+x <- seq(7,24,by=.01)
+y1 <- 350*dnorm(x, 10.0985, 1.3)
+y2 <- 190*dnorm(x, 14.5, 2)
+y3 <- 800*dnorm(x, 19, 6)
+lines(x,y1+y2+y3,col=2,lwd=2)
+
+
+#### 
+plot(0, xlim = c(7,24), ylim = c(0, max(X$arrivals)), 
+     main = 'two-normal for arrival rate function (MONDAYS)',
+     xlab = "Hours", ylab = '# of Arrivals')
+for(i in 1:(nrow(X)/17)){
+  lines(X$hour[(i*17-16):(i*17)], X$arrivals[(i*17-16):(i*17)])
+}
+x <- seq(7,24,by=.01)
+y1 <- 30*sin(2*pi/16*x+10) + 40
+lines(x,y1,col=2,lwd=1)
+y2 <- 30*sin(2*pi/16*x+5) + 20
+lines(x,y2,col=2,lwd=1)
+y3 <- 5*sin(2*pi/16*x) + 10
+lines(x,y3,col=2,lwd=1)
+lines(x,y1+y2+y3,col=2,lwd=2)

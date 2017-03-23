@@ -1,7 +1,11 @@
 library(proto)
+arrivals <- read.table(file = "C:/Users/Keguo/Dropbox/GitHub/queue-systems/CallCenter/staffing/arrival_pool.csv")$V1 - 7*3600
+serviceTime <- read.table(file = "C:/Users/Keguo/Dropbox/GitHub/queue-systems/CallCenter/staffing/serv_time_pool.csv")$V1
+patientTime <- read.table(file = "C:/Users/Keguo/Dropbox/GitHub/queue-systems/CallCenter/staffing/patient_time_pool.csv")$V1
+
+
 set.seed(1)
-# arrivalEpochs <- read.table(file = "C:/Users/Keguo/Dropbox/GitHub/queue-systems/CallCenter/arrivalEpochs_tmax10000_prec1000_g1.txt",)$V1
-arrivalEpochs <- arrivalEpochs3[-1]
+arrivalEpochs <- sort(sample(arrivals, round(length(arrivals)/44), replace = F))
 timeline <- seq(1, max(arrivalEpochs), 1)
 serviceTimeSeq <- sample(serviceTime, length(arrivalEpochs), replace = T)
 patientTimeSeq <- sample(patientTime, length(arrivalEpochs), replace = T)
@@ -25,11 +29,6 @@ person <- proto(
 )
 
 numbServers_high = 7
-numbServers_low = 5
-
-
-
-
 
 totalCustomers = 0
 totalAbandons = 0
@@ -77,23 +76,25 @@ for(i in timeline) {
     }
   }
   
+  if(i <= 3600*8) {
+    numbServers = 7
+  }else numbServers = 5
+  
   # Can we place someone into a slot?
-  for(j in 1:numbServers_high) {
+  for(j in 1:numbServers) {
     # If this slot is free
     if(serviceCompletionEpoch[j]==0) { 
       if(length(queue) > 0) {
-        if(j<=numbServers_low | i<=3600*8){
-          placedPerson = queue[[1]]
-          serviceCompletionEpoch[j] = i + placedPerson$serviceTimeNeeded
-          waitEpoch = c(waitEpoch, placedPerson$serviceTimeWaited)
-          # Only interested in these if person waited 1 or more intevals at front
-          # of line
-          if(placedPerson$serviceTimeWaitedAtHeadOfQueue) {
-            frontOfLineWaits = c(frontOfLineWaits, 
-                                 placedPerson$serviceTimeWaitedAtHeadOfQueue)
-          }
-          queue[[1]] = NULL
+        placedPerson = queue[[1]]
+        serviceCompletionEpoch[j] = i + placedPerson$serviceTimeNeeded
+        waitEpoch = c(waitEpoch, placedPerson$serviceTimeWaited)
+        # Only interested in these if person waited 1 or more intevals at front
+        # of line
+        if(placedPerson$serviceTimeWaitedAtHeadOfQueue) {
+          frontOfLineWaits = c(frontOfLineWaits, 
+                               placedPerson$serviceTimeWaitedAtHeadOfQueue)
         }
+        queue[[1]] = NULL
       }
     }
   }

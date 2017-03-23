@@ -1,7 +1,11 @@
 library(proto)
+arrivals <- read.table(file = "C:/Users/Keguo/Dropbox/GitHub/queue-systems/CallCenter/staffing/arrival_pool.csv")$V1 - 7*3600
+serviceTime <- read.table(file = "C:/Users/Keguo/Dropbox/GitHub/queue-systems/CallCenter/staffing/serv_time_pool.csv")$V1
+patientTime <- read.table(file = "C:/Users/Keguo/Dropbox/GitHub/queue-systems/CallCenter/staffing/patient_time_pool.csv")$V1
+
+
 set.seed(1)
-# arrivalEpochs <- read.table(file = "C:/Users/Keguo/Dropbox/GitHub/queue-systems/CallCenter/arrivalEpochs_tmax10000_prec1000_g1.txt",)$V1
-arrivalEpochs <- arrivalEpochs3[-1]
+arrivalEpochs <- sort(sample(arrivals, round(length(arrivals)/44), replace = F))
 timeline <- seq(1, max(arrivalEpochs), 1)
 serviceTimeSeq <- sample(serviceTime, length(arrivalEpochs), replace = T)
 patientTimeSeq <- sample(patientTime, length(arrivalEpochs), replace = T)
@@ -24,7 +28,7 @@ person <- proto(
   patientTime = 0
 )
 
-numbServers = 6
+numbServers = 3
 
 
 
@@ -116,9 +120,9 @@ ptm2 = proc.time()
 t_sim = ptm2[3] - ptm1[3]
 cat("The simulation takes", t_sim, "s" )
 
-plot(queueLengths[1:7200], type="o", col="blue", pch=20, main="Queue lengths over time",
+plot(queueLengths[1:3600*5], type="o", col="blue", pch=20, main="Queue lengths over time",
      xlab="Interval", ylab="Queue length")
-plot(numbCustomers[1:7200], type="o", col="blue", pch=20, main="# of Customers over time",
+plot(numbCustomers[1:3600*5], type="o", col="blue", pch=20, main="# of Customers over time",
      xlab="Interval", ylab="# of customers in system")
 totalAbandons
 totalAbandons/length(arrivalEpochs)
