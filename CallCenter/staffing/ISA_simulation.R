@@ -1,5 +1,4 @@
 library(proto)
-library(plyr)
 arrivals <- read.table(file = "C:/Users/Keguo/Dropbox/GitHub/queue-systems/CallCenter/staffing/arrival_pool.csv")$V1 - 7*3600
 serviceTime <- read.table(file = "C:/Users/Keguo/Dropbox/GitHub/queue-systems/CallCenter/staffing/serv_time_pool.csv")$V1
 patientTime <- read.table(file = "C:/Users/Keguo/Dropbox/GitHub/queue-systems/CallCenter/staffing/patient_time_pool.csv")$V1
@@ -27,7 +26,7 @@ numbArrivals <- round(length(arrivals)/44)
 N = 3600*17
 timeline <- 1:N
 
-ntrials=100
+ntrials=500
 
 set.seed(1)
 
@@ -141,7 +140,7 @@ ptm1 = proc.time()
 ISA <- function(){
   eps = 500
   S0 = rep(20, N)
-  while(eps > 15){
+  while(eps > 2){
     cat('one step is going on  ..\n')
     Lmatrix <- simu(numbServers = S0)
     S1 = apply(Lmatrix, 2, argmin)
@@ -153,11 +152,13 @@ ISA <- function(){
     cat(t_sim/60, "min has passed after this step \n" )
   }
   print('the algorithm is done!')
-  return(list(S1, eps))
+  return(S1)
 }
 
 Final_S <- ISA()
 
+plot(Final_S, type="o", col="blue", pch=20, main="# of servers over time",
+     xlab="Time in seconds (17 hours)", ylab="S(t)")
 
 plot(queueLengths[1:3600*5], type="o", col="blue", pch=20, main="Queue lengths over time",
      xlab="Interval", ylab="Queue length")
