@@ -6,7 +6,7 @@ patientTime <- read.table(file = "C:/Users/Keguo/Dropbox/GitHub/queue-systems/Ca
 
 set.seed(1)
 arrivalEpochs <- sort(sample(arrivals, round(length(arrivals)/44), replace = F))
-timeline <- seq(1, max(arrivalEpochs), 1)
+timeline <- 1:(3600*17)
 serviceTimeSeq <- sample(serviceTime, length(arrivalEpochs), replace = T)
 patientTimeSeq <- sample(patientTime, length(arrivalEpochs), replace = T)
 #### Functions ####

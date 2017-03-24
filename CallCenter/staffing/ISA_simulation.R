@@ -3,12 +3,6 @@ arrivals <- read.table(file = "C:/Users/Keguo/Dropbox/GitHub/queue-systems/CallC
 serviceTime <- read.table(file = "C:/Users/Keguo/Dropbox/GitHub/queue-systems/CallCenter/staffing/serv_time_pool.csv")$V1
 patientTime <- read.table(file = "C:/Users/Keguo/Dropbox/GitHub/queue-systems/CallCenter/staffing/patient_time_pool.csv")$V1
 
-
-set.seed(1)
-arrivalEpochs <- sort(sample(arrivals, round(length(arrivals)/44), replace = F))
-timeline <- 1:(3600*17)
-serviceTimeSeq <- sample(serviceTime, length(arrivalEpochs), replace = T)
-patientTimeSeq <- sample(patientTime, length(arrivalEpochs), replace = T)
 #### Functions ####
 # R is missing a nice way to do ++, so we use this
 inc <- function(x) {
@@ -28,11 +22,14 @@ person <- proto(
   patientTime = 0
 )
 
+
+set.seed(1)
+arrivalEpochs <- sort(sample(arrivals, round(length(arrivals)/44), replace = F))
+timeline <- 1:(3600*17)
+serviceTimeSeq <- sample(serviceTime, length(arrivalEpochs), replace = T)
+patientTimeSeq <- sample(patientTime, length(arrivalEpochs), replace = T)
+
 numbServers = 3
-
-
-
-
 
 totalCustomers = 0
 totalAbandons = 0
@@ -119,6 +116,17 @@ for(i in timeline) {
 ptm2 = proc.time()
 t_sim = ptm2[3] - ptm1[3]
 cat("The simulation takes", t_sim, "s" )
+
+L = list()
+for(i in 1:17){
+  t = table(numbCustomers[(3600*(i-1)+1):(3600*i)])
+  L[[i]] = matrix(
+    c(sort(as.numeric(paste(dimnames(t)[[1]]))),
+      cumsum(sort(as.vector(t)/3600))), ncol = 2) # reverse 
+}
+L[[1]]
+
+alpha = .2
 
 plot(queueLengths[1:3600*5], type="o", col="blue", pch=20, main="Queue lengths over time",
      xlab="Interval", ylab="Queue length")
