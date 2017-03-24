@@ -27,7 +27,7 @@ numbArrivals <- round(length(arrivals)/44)
 N = 3600*17
 timeline <- 1:N
 
-ntrials=5
+ntrials=100
 
 set.seed(1)
 
@@ -122,33 +122,38 @@ simu <- function(numbServers = rep(20, N)){
   }
   return(Lmatrix)
 }
+# ptm1 = proc.time()
+# Lmatrix <- simu()
+# ptm2 = proc.time()
+# t_sim = ptm2[3] - ptm1[3]
+# cat("The simulation takes", t_sim, "s" )
+
+# Lmatrix <- simu()
+# alpha = .2
+# argmin = function(L){
+#   L = sort(L)
+#   L[ntrials - ceiling(alpha*ntrials) + 1] + 1  #Compute based on (3.24)
+# }
+# 
+# S = apply(Lmatrix, 2, argmin)
+
 ptm1 = proc.time()
-Lmatrix <- simu()
-ptm2 = proc.time()
-t_sim = ptm2[3] - ptm1[3]
-cat("The simulation takes", t_sim, "s" )
-
-
-alpha = .2
-argmin = function(L){
-  L = sort(L)
-  L[ntrials - ceiling(alpha*ntrials) + 1] + 1  #Compute based on (3.24)
-}
-
-S = apply(Lmatrix, 2, argmin)
-
-
 ISA <- function(){
   eps = 500
   S0 = rep(20, N)
-  while(eps > 2){
-    S1 = S0
+  while(eps > 15){
+    cat('one step is going on  ..\n')
     Lmatrix <- simu(numbServers = S0)
     S1 = apply(Lmatrix, 2, argmin)
-    eps = max(S1-S0)
-    cat('one step ..')
+    eps = max(abs(S1-S0))
+    S0 = S1
+    cat('eps becomes', eps, '\n')
+    ptm2 = proc.time()
+    t_sim = ptm2[3] - ptm1[3]
+    cat(t_sim/60, "min has passed after this step \n" )
   }
-  return(S1)
+  print('the algorithm is done!')
+  return(list(S1, eps))
 }
 
 Final_S <- ISA()
